@@ -9,7 +9,7 @@ export const jsonWebKeySchema = z
     key_ops: z.array(z.string()).optional(),
     alg: z.string().optional(),
     x5u: z.string().optional(),
-    x5c: z.string().optional(),
+    x5c: z.array(z.string()).optional(),
     x5t: z.string().optional(),
     'x5t#S256': z.string().optional(),
   })
