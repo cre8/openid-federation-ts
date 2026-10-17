@@ -59,6 +59,25 @@ describe('OpenID Federation 1.0 final', () => {
     assert.throws(() => validate({ schema: trustMarkSchema, data: { trust_mark: trustMarkJwt } }))
   })
 
+  it('should reject a trust mark whose type differs from the type in its JWT', () => {
+    const trustMarkJwt = unsignedJwt(
+      { typ: 'trust-mark+jwt', alg: 'ES256', kid: 'tm' },
+      {
+        iss: 'https://tm-issuer.example.org',
+        sub: 'https://leaf.example.org',
+        trust_mark_type: 'https://tm.example.org/b',
+        iat: 1,
+      }
+    )
+
+    assert.throws(() =>
+      validate({
+        schema: trustMarkSchema,
+        data: { trust_mark_type: 'https://tm.example.org/a', trust_mark: trustMarkJwt },
+      })
+    )
+  })
+
   it('should keep protocol parameters and entity types the schema does not define', () => {
     const metadata = validate({
       schema: metadataSchema,

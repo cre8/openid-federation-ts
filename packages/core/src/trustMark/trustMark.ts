@@ -66,5 +66,9 @@ export const trustMarkSchema = z
     }),
   })
   .transform(withTrustMarkType)
+  .refine((entry) => entry.trust_mark_type === entry.trust_mark.claims.trust_mark_type, {
+    message: 'trust_mark_type must be the trust_mark_type of the trust mark JWT',
+    path: ['trust_mark_type'],
+  })
 
 export type TrustMark = z.output<typeof trustMarkSchema>
