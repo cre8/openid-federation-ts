@@ -8,6 +8,10 @@ export class MetadataHelper {
     this.leafMetadata = leafMetadata as Record<string, Record<string, unknown>>
   }
 
+  public hasEntityType(service: string) {
+    return this.leafMetadata[service] !== undefined
+  }
+
   public hasProperty(service: string, property: string) {
     return this.leafMetadata[service]?.[property] !== undefined
   }
@@ -41,12 +45,8 @@ export class MetadataHelper {
       },
     }
 
+    // The entity type stays, also when it has no metadata parameters left
     delete this.leafMetadata[service][property]
-
-    // When the service block is empty we can delete the service block
-    if (Object.keys(serviceBlock).length === 0) {
-      delete this.leafMetadata[service]
-    }
   }
 
   public asMetadata(): Metadata {

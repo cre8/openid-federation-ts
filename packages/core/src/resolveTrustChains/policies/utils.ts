@@ -26,6 +26,8 @@ export function mergeMetadata(leafConfigMetadata: Metadata, superiorEntityStatem
   const mergedLeafMetadata = new MetadataHelper(immutable(leafConfigMetadata))
 
   for (const [entityType, entityConfigMetadata] of objectToEntries(superiorEntityStatement)) {
+    // Section 3.1.1: it applies only to the entity types present in the subject's entity configuration
+    if (!mergedLeafMetadata.hasEntityType(String(entityType))) continue
     for (const [key, value] of objectToEntries((entityConfigMetadata ?? {}) as Record<string, unknown>)) {
       mergedLeafMetadata.setPropertyValue(String(entityType), String(key), value)
     }

@@ -486,4 +486,195 @@ describe('resolve trust chains with validation', () => {
     const trustChains = await resolveTrustChains(federation.options({ entityId: leaf.id }))
     assert.strictEqual(trustChains.length, 1)
   })
+
+  // Section 3.2: "If the metadata_policy Claim is present, the Entity Statement MUST be a Subordinate Statement."
+  it('should reject an entity configuration with metadata_policy', async () => {
+    await federation.addEntity({
+      ...leaf,
+      claims: { metadata_policy: { openid_credential_issuer: { credential_issuer: { essential: true } } } },
+    })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /contains metadata_policy, which only subordinate statements may contain/)
+  })
+
+  // Section 3.2: "If the constraints Claim is present, the Entity Statement MUST be a Subordinate Statement."
+  it('should reject an entity configuration with constraints', async () => {
+    await federation.addEntity({ ...intermediate, claims: { constraints: { max_path_length: 1 } } })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /contains constraints, which only subordinate statements may contain/)
+  })
+
+  // Section 3.1.2 authority_hints: "Its value MUST contain the Entity Identifiers of its Immediate Superiors and MUST
+  // NOT be the empty array []."
+  it('should reject an entity configuration with an empty authority_hints array', async () => {
+    await federation.addEntity({ ...leaf, authorityHints: [] })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /has an empty authority_hints array/)
+  })
+
+  // Section 3.2: "If the authority_hints Claim is present, the Entity Statement MUST be an Entity Configuration."
+  it('should reject a subordinate statement with authority_hints', async () => {
+    await federation.addStatement({
+      issuer: intermediate,
+      subject: leaf,
+      claims: { authority_hints: [trustAnchor.id] },
+    })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /contains authority_hints, which only entity configurations may contain/)
+  })
+
+  // Section 3.1.3 metadata_policy_crit: "When included its value MUST NOT be the empty array []."
+  it('should reject a subordinate statement with an empty metadata_policy_crit array', async () => {
+    await federation.addStatement({ issuer: intermediate, subject: leaf, claims: { metadata_policy_crit: [] } })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /has an empty metadata_policy_crit array/)
+  })
+
+  // Section 6.1.3.1.5 subset_of: "If the metadata parameter is present, it is assigned the intersection between the
+  // values of the operator and the metadata parameter."
+  it('should resolve a chain whose policy checks a metadata parameter the leaf does not have', async () => {
+    await federation.addStatement({
+      issuer: trustAnchor,
+      subject: intermediate,
+      claims: {
+        metadata_policy: {
+          openid_credential_issuer: {
+            authorization_servers: { subset_of: ['https://as.example.org'] },
+            display: { superset_of: ['x'] },
+            credential_issuer: { one_of: [leaf.id] },
+          },
+        },
+      },
+    })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.deepStrictEqual(failures, [])
+    assert.deepStrictEqual(trustChains[0]?.resolvedLeafMetadata?.openid_credential_issuer, {
+      credential_issuer: leaf.id,
+    })
+  })
+
+  // Section 6.1.4.2: "for every Entity Type metadata and metadata parameter for which a corresponding metadata
+  // parameter policy is present, the included policy operators MUST be applied"
+  it('should not add an entity type the leaf metadata does not have', async () => {
+    await federation.addStatement({
+      issuer: trustAnchor,
+      subject: intermediate,
+      claims: {
+        metadata_policy: {
+          openid_relying_party: {
+            contacts: { add: ['ops@ta.example.org'] },
+            client_name: { default: 'RP' },
+            subject_type: { value: 'pairwise' },
+          },
+        },
+      },
+    })
+
+    const [trustChain] = await resolveTrustChains(federation.options({ entityId: leaf.id }))
+
+    assert.deepStrictEqual(Object.keys(trustChain?.resolvedLeafMetadata ?? {}).sort(), [
+      'federation_entity',
+      'openid_credential_issuer',
+    ])
+  })
+
+  // Section 6.1.3.1.1 value: "MAY be combined with subset_of, in which case the values of value MUST be a subset of the
+  // values of subset_of."
+  it('should resolve a chain whose merged policy combines value of the trust anchor with subset_of of the intermediate', async () => {
+    await federation.addStatement({
+      issuer: trustAnchor,
+      subject: intermediate,
+      claims: {
+        metadata_policy: { openid_credential_issuer: { authorization_servers: { value: ['https://as.example.org'] } } },
+      },
+    })
+    await federation.addStatement({
+      issuer: intermediate,
+      subject: leaf,
+      claims: {
+        metadata_policy: {
+          openid_credential_issuer: {
+            authorization_servers: { subset_of: ['https://as.example.org', 'https://as2.example.org'] },
+          },
+        },
+      },
+    })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.deepStrictEqual(failures, [])
+    assert.deepStrictEqual(
+      (trustChains[0]?.resolvedLeafMetadata?.openid_credential_issuer as Record<string, unknown> | undefined)
+        ?.authorization_servers,
+      ['https://as.example.org']
+    )
+  })
+
+  // Section 3.1.3 metadata_policy_crit: "If any of the listed policy operators are not understood and supported, then
+  // the Subordinate Statement and thus the Trust Chain that includes it MUST be considered invalid."
+  it('should reject a subordinate statement that requires a policy operator that is not supported', async () => {
+    await federation.addStatement({
+      issuer: trustAnchor,
+      subject: intermediate,
+      claims: { metadata_policy_crit: ['regexp'] },
+    })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /requires policy operators that are not supported: regexp/)
+  })
+
+  // Section 3.2: "If the source_endpoint Claim is present, the Entity Statement MUST be a Subordinate Statement."
+  it('should reject an entity configuration with source_endpoint', async () => {
+    await federation.addEntity({ ...leaf, claims: { source_endpoint: `${intermediate.id}/fetch` } })
+
+    const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
+
+    assert.strictEqual(trustChains.length, 0)
+    assert.match(failures[0]?.reason ?? '', /contains source_endpoint, which only subordinate statements may contain/)
+  })
+
+  // Section 3.1.1 metadata: "When metadata is used in a Subordinate Statement, it applies only to those Entity Types
+  // that are present in the subject's Entity Configuration."
+  it('should not add an entity type from the metadata of the subordinate statement', async () => {
+    await federation.addStatement({
+      issuer: intermediate,
+      subject: leaf,
+      claims: {
+        metadata: {
+          openid_credential_issuer: { display: [{ name: 'Issuer' }] },
+          openid_provider: { issuer: leaf.id },
+        },
+      },
+    })
+
+    const [trustChain] = await resolveTrustChains(federation.options({ entityId: leaf.id }))
+
+    assert.deepStrictEqual(Object.keys(trustChain?.resolvedLeafMetadata ?? {}).sort(), [
+      'federation_entity',
+      'openid_credential_issuer',
+    ])
+    assert.deepStrictEqual(trustChain?.resolvedLeafMetadata?.openid_credential_issuer, {
+      credential_issuer: leaf.id,
+      display: [{ name: 'Issuer' }],
+    })
+  })
 })
