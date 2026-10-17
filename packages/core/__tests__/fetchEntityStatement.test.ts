@@ -61,7 +61,7 @@ describe('fetch entity statement', () => {
         'content-type': 'application/entity-statement+jwt',
       })
       .get('/fetch')
-      .query({ iss, sub })
+      .query({ sub })
       .reply(200, entityStatementJwt, {
         'content-type': 'application/entity-statement+jwt',
       })
@@ -133,7 +133,7 @@ describe('fetch entity statement', () => {
         'content-type': 'application/entity-statement+jwt',
       })
       .get('/fetch')
-      .query({ iss, sub })
+      .query({ sub })
       .reply(200, entityStatementJwt, {
         'content-type': 'application/entity-statement+jwt',
       })
@@ -199,7 +199,7 @@ describe('fetch entity statement', () => {
         'content-type': 'application/entity-statement+jwt',
       })
       .get('/fetch')
-      .query({ iss, sub })
+      .query({ sub })
       .reply(200, entityStatementJwt, {
         'content-type': 'application/entity-statement+jwt',
       })
@@ -286,7 +286,7 @@ describe('fetch entity statement', () => {
         'content-type': 'application/entity-statement+jwt',
       })
       .get('/fetch')
-      .query({ iss, sub })
+      .query({ sub })
       .reply(404)
 
     await assert.rejects(
@@ -350,7 +350,7 @@ describe('fetch entity statement', () => {
         'content-type': 'application/entity-statement+jwt',
       })
       .get('/fetch')
-      .query({ iss, sub })
+      .query({ sub })
       .reply(200, entityStatementJwt, {
         'content-type': 'invalid-content',
       })

@@ -101,8 +101,11 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
     for (const sub of subordinates ?? []) {
       const givenClaims = typeof sub === 'string' ? { sub } : { sub: sub.entityId, ...sub.claims }
 
+      // A subordinate statement lists the subject's federation keys
       const subordinateClaims = {
-        jwks: { keys: [] },
+        jwks: chainOptions.find((options) => options.entityId === givenClaims.sub)?.jwks ?? {
+          keys: [{ kid: 'a', kty: 'EC' }],
+        },
         iss: entityId,
         exp: dateInSeconds(1000 * 60 * 60 * 24 * 30), // 30 days
         iat: dateInSeconds(),
@@ -120,7 +123,6 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
           .get('')
           .query({
             sub: subordinateClaims.sub,
-            iss: entityId,
           })
           .reply(200, entityStatementJwt, {
             'content-type': 'application/entity-statement+jwt',
