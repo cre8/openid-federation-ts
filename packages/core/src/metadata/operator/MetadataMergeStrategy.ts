@@ -19,8 +19,14 @@ export enum MetadataMergeStrategy {
   Intersection = 2,
   /**
    *
-   * If a Superior has specified essential=true, then a Subordinate MUST NOT change that. If a Superior has specified essential=false, then a Subordinate is allowed to change that to essential=true. If a Superior has not specified essential, then a Subordinate can set essential to true or false. If those conditions are not met, this MUST result in a policy error.
+   * The result of merging the values of two these operators is the logical disjunction (OR) of the operator values.
    *
    */
-  SuperiorFollowsIfTrue = 3,
+  LogicalOr = 3,
+  /**
+   *
+   * The result of merging the values of two these operators is the intersection of the operator values. The intersection may be an empty array.
+   *
+   */
+  IntersectionMayBeEmpty = 4,
 }

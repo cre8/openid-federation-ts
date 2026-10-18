@@ -129,7 +129,8 @@ const reasonOf = (error: unknown) => (error instanceof Error && error.message ? 
  *
  * Every entity configuration and subordinate statement is checked for its signature, `iat`, `exp` and `crit`. An
  * entity configuration must be about the requested entity and signed with a key its superior's subordinate statement
- * lists. A subordinate statement must be issued by the superior about the subject. `max_path_length` and
+ * lists. A subordinate statement must be issued by the superior about the subject. Each statement may only contain the
+ * claims Section 3.2 allows for its kind. `max_path_length` and
  * `allowed_entity_types` constraints are applied, then the metadata policies. Chains with `naming_constraints` are
  * rejected, as they are not evaluated. Trust marks are not verified.
  *
@@ -203,6 +204,7 @@ export const resolveTrustChainsWithFailures = async (
         }
         await verifyJwtSignature({ jwt, verifyJwtCallback })
         assertCurrent(claims)
+        assertEntityConfigurationClaims(claims)
         return { jwt, claims }
       })()
       entityConfigurations.set(id, pending)
@@ -296,6 +298,7 @@ export const resolveTrustChainsWithFailures = async (
         )
       }
       assertCurrent(claims)
+      assertSubordinateStatementClaims(claims)
 
       // Naming constraints are not evaluated, so a chain that sets them is rejected instead of ignoring them
       if (claims.constraints?.naming_constraints) {
@@ -359,8 +362,8 @@ export const resolveTrustChainsWithFailures = async (
       chain: [...statementClaims, trustAnchorConfiguration.claims],
       jwtChain: [leaf.jwt, ...statements.map((statement) => statement.jwt), trustAnchorConfiguration.jwt],
       rawLeafEntityConfiguration: leaf.claims,
-      // Again after the policies, which could otherwise add a removed entity type back
-      resolvedLeafMetadata: restrictEntityTypes(resolvedLeafMetadata, statementClaims),
+      // The policies do not add entity types, so a removed one stays removed
+      resolvedLeafMetadata,
       trustAnchorEntityConfiguration: trustAnchorConfiguration.claims,
       expiresAt,
     }
@@ -384,6 +387,49 @@ export const resolveTrustChainsWithFailures = async (
   }
 
   return { trustChains, failures }
+}
+
+/**
+ * Section 3.2: claims that only a subordinate statement may contain are rejected in an entity configuration.
+ */
+const assertEntityConfigurationClaims = (claims: EntityConfigurationClaims) => {
+  const present = (['metadata_policy', 'metadata_policy_crit', 'constraints', 'source_endpoint'] as const).filter(
+    (claim) => claims[claim] !== undefined
+  )
+  if (present.length > 0) {
+    throw fail(
+      `entity configuration of '${claims.sub}' contains ${present.join(', ')}, which only subordinate statements may contain`
+    )
+  }
+  if (claims.authority_hints?.length === 0) {
+    throw fail(`entity configuration of '${claims.sub}' has an empty authority_hints array`)
+  }
+}
+
+/**
+ * Section 3.2: claims that only an entity configuration may contain are rejected in a subordinate statement.
+ */
+const assertSubordinateStatementClaims = (claims: EntityStatementClaims) => {
+  const present = (['authority_hints', 'trust_marks', 'trust_mark_issuers', 'trust_mark_owners'] as const).filter(
+    (claim) => claims[claim] !== undefined
+  )
+  if (present.length > 0) {
+    throw fail(
+      `subordinate statement about '${claims.sub}' issued by '${claims.iss}' contains ${present.join(', ')}, which only entity configurations may contain`
+    )
+  }
+  if (claims.metadata_policy_crit?.length === 0) {
+    throw fail(
+      `subordinate statement about '${claims.sub}' issued by '${claims.iss}' has an empty metadata_policy_crit array`
+    )
+  }
+  // Section 3.1.3: listed operators that are not understood make the statement invalid. No additional operators are
+  // supported, and the standard ones must not be listed.
+  if (claims.metadata_policy_crit !== undefined) {
+    throw fail(
+      `subordinate statement about '${claims.sub}' issued by '${claims.iss}' requires policy operators that are not supported: ${claims.metadata_policy_crit.join(', ')}`
+    )
+  }
 }
 
 /**
