@@ -35,19 +35,15 @@ describe('OpenID Federation 1.0 final', () => {
     assert.strictEqual(trustMark.trust_mark.jwt, trustMarkJwt)
   })
 
-  it('should map the draft id of a trust mark to trust_mark_type', () => {
+  it('should reject a trust mark with the draft id instead of trust_mark_type', () => {
     const trustMarkJwt = unsignedJwt(
       { typ: 'trust-mark+jwt', alg: 'ES256', kid: 'tm' },
       { iss: 'https://tm-issuer.example.org', sub: 'https://leaf.example.org', id: 'https://tm.example.org/a', iat: 1 }
     )
 
-    const trustMark = validate({
-      schema: trustMarkSchema,
-      data: { id: 'https://tm.example.org/a', trust_mark: trustMarkJwt },
-    })
-
-    assert.strictEqual(trustMark.trust_mark_type, 'https://tm.example.org/a')
-    assert.strictEqual(trustMark.trust_mark.claims.trust_mark_type, 'https://tm.example.org/a')
+    assert.throws(() =>
+      validate({ schema: trustMarkSchema, data: { id: 'https://tm.example.org/a', trust_mark: trustMarkJwt } })
+    )
   })
 
   it('should reject a trust mark without a type', () => {
@@ -113,24 +109,31 @@ describe('OpenID Federation 1.0 final', () => {
     )
   })
 
-  it('should sign iat and exp given as dates as NumericDate values', async () => {
-    const jwt = await createEntityConfiguration({
-      signJwtCallback,
-      claims: {
-        iss: 'https://example.org',
-        sub: 'https://example.org',
-        iat: new Date(1700000000500),
-        exp: new Date(1700086400000),
-        jwks: { keys: [{ kid: 'a', kty: 'EC' }] },
-      },
-      header: { kid: 'a', typ: 'entity-statement+jwt' },
+  it('should accept only NumericDate values for iat and exp', async () => {
+    const claims = {
+      iss: 'https://example.org',
+      sub: 'https://example.org',
+      jwks: { keys: [{ kid: 'a', kty: 'EC' }] },
+    }
+
+    const parsed = validate({
+      schema: entityConfigurationClaimsSchema,
+      data: { ...claims, iat: 1700000000, exp: 1700086400 },
     })
-
-    const claims = JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString())
-    assert.strictEqual(claims.iat, 1700000000)
-    assert.strictEqual(claims.exp, 1700086400)
-
-    const parsed = validate({ schema: entityConfigurationClaimsSchema, data: claims })
     assert.deepStrictEqual(parsed.iat, new Date(1700000000000))
+
+    for (const iat of ['2023-11-14T22:13:20Z', '1700000000', new Date(1700000000000)]) {
+      assert.throws(() =>
+        validate({ schema: entityConfigurationClaimsSchema, data: { ...claims, iat, exp: 1700086400 } })
+      )
+    }
+
+    await assert.rejects(
+      createEntityConfiguration({
+        signJwtCallback,
+        claims: { ...claims, iat: new Date(1700000000000), exp: 1700086400 } as never,
+        header: { kid: 'a', typ: 'entity-statement+jwt' },
+      })
+    )
   })
 })

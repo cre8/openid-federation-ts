@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import type { EntityConfigurationClaims } from '../src/entityConfiguration'
+import { entityConfigurationClaimsSchema } from '../src/entityConfiguration'
 import { fetchEntityStatementChain } from '../src/entityStatement'
 import { combineMetadataPolicies } from '../src/resolveTrustChains/policies/combineMetadataPolicies'
 import type { SignCallback, VerifyCallback } from '../src/utils'
@@ -60,7 +60,7 @@ describe('policy merge', () => {
     )
 
     const statements = await fetchEntityStatementChain({
-      entityConfigurations: configurations.map(({ claims }) => claims as EntityConfigurationClaims),
+      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
       verifyJwtCallback,
     })
 
@@ -124,7 +124,7 @@ describe('policy merge', () => {
 
     const statements = await fetchEntityStatementChain({
       verifyJwtCallback,
-      entityConfigurations: configurations.map(({ claims }) => claims as EntityConfigurationClaims),
+      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
     })
 
     assert.throws(() => combineMetadataPolicies({ statements }))
@@ -179,7 +179,7 @@ describe('policy merge', () => {
 
     const statements = await fetchEntityStatementChain({
       verifyJwtCallback,
-      entityConfigurations: configurations.map(({ claims }) => claims as EntityConfigurationClaims),
+      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
     })
 
     const { mergedPolicy } = await combineMetadataPolicies({ statements })

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { type EntityConfigurationClaims, fetchEntityConfiguration } from '../src/entityConfiguration'
+import { entityConfigurationClaimsSchema, fetchEntityConfiguration } from '../src/entityConfiguration'
 import { fetchEntityStatementChain } from '../src/entityStatement'
 import { applyMetadataPolicyToMetadata, combineMetadataPolicies } from '../src/resolveTrustChains/policies'
 import { mergeMetadata } from '../src/resolveTrustChains/policies/utils'
@@ -108,7 +108,7 @@ describe('policy application to the real metadata chain', () => {
     )
 
     const statements = await fetchEntityStatementChain({
-      entityConfigurations: configurations.map(({ claims }) => claims as EntityConfigurationClaims),
+      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
       verifyJwtCallback,
     })
 

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { fetchEntityConfigurationChains } from '../src/entityConfiguration'
+import { entityConfigurationClaimsSchema } from '../src/entityConfiguration'
 import type { SignCallback, VerifyCallback } from '../src/utils'
 import { setupConfigurationChain } from './utils/setupConfigurationChain'
 
@@ -26,8 +27,8 @@ describe('fetch entity configuration chains', () => {
     assert.strictEqual(trustChains.length, 1)
     assert.strictEqual(trustChains[0]?.length, 2)
 
-    assert.deepStrictEqual(trustChains[0]?.[0], configurations[0]?.claims)
-    assert.deepStrictEqual(trustChains[0]?.[1], configurations[1]?.claims)
+    assert.deepStrictEqual(trustChains[0]?.[0], entityConfigurationClaimsSchema.parse(configurations[0]?.claims))
+    assert.deepStrictEqual(trustChains[0]?.[1], entityConfigurationClaimsSchema.parse(configurations[1]?.claims))
 
     for (const scope of nockScopes) {
       scope.done()
@@ -60,9 +61,9 @@ describe('fetch entity configuration chains', () => {
     assert.strictEqual(trustChains.length, 1)
     assert.strictEqual(trustChains[0]?.length, 3)
 
-    assert.deepStrictEqual(trustChains[0]?.[0], configurations[0]?.claims)
-    assert.deepStrictEqual(trustChains[0]?.[1], configurations[1]?.claims)
-    assert.deepStrictEqual(trustChains[0]?.[2], configurations[2]?.claims)
+    assert.deepStrictEqual(trustChains[0]?.[0], entityConfigurationClaimsSchema.parse(configurations[0]?.claims))
+    assert.deepStrictEqual(trustChains[0]?.[1], entityConfigurationClaimsSchema.parse(configurations[1]?.claims))
+    assert.deepStrictEqual(trustChains[0]?.[2], entityConfigurationClaimsSchema.parse(configurations[2]?.claims))
 
     for (const scope of nockScopes) {
       scope.done()
@@ -95,8 +96,8 @@ describe('fetch entity configuration chains', () => {
     assert.strictEqual(trustChains.length, 1)
     assert.strictEqual(trustChains[0]?.length, 2)
 
-    assert.deepStrictEqual(trustChains[0]?.[0], configurations[0]?.claims)
-    assert.deepStrictEqual(trustChains[0]?.[1], configurations[1]?.claims)
+    assert.deepStrictEqual(trustChains[0]?.[0], entityConfigurationClaimsSchema.parse(configurations[0]?.claims))
+    assert.deepStrictEqual(trustChains[0]?.[1], entityConfigurationClaimsSchema.parse(configurations[1]?.claims))
 
     for (const scope of nockScopes) {
       scope.done()
