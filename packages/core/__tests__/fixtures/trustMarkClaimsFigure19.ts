@@ -1,5 +1,5 @@
 export const trustMarkClaimsFigure19 = {
-  id: 'https://mushrooms.federation.example.com/openid_relying_party/public/',
+  trust_mark_type: 'https://mushrooms.federation.example.com/openid_relying_party/public/',
   iss: 'https://epigeo.tm-issuer.example.it',
   sub: 'https://porcino.example.com/rp',
   iat: 1579621160,

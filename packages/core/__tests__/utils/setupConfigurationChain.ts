@@ -4,10 +4,14 @@ import {
   type EntityConfigurationHeaderOptions,
   createEntityConfiguration,
 } from '../../src/entityConfiguration'
-import { type EntityStatementClaimsOptions, createEntityStatement } from '../../src/entityStatement'
+import {
+  type EntityStatementClaimsOptions,
+  createEntityStatement,
+  entityStatementClaimsSchema,
+} from '../../src/entityStatement'
 import type { JsonWebKeySetOptions } from '../../src/jsonWeb'
 import type { SignCallback } from '../../src/utils'
-import { dateInSeconds } from './dateInSeconds'
+import { numericDate } from './numericDate'
 
 type SubordinateOptions = {
   entityId: string
@@ -61,8 +65,8 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
     const claims: EntityConfigurationClaimsOptions = {
       iss: entityId,
       sub: entityId,
-      exp: dateInSeconds(1000 * 60 * 60 * 24 * 30), // 30 days
-      iat: dateInSeconds(),
+      exp: numericDate(1000 * 60 * 60 * 24 * 30), // 30 days
+      iat: numericDate(),
       jwks: jwks ?? { keys: [{ kid: 'a', kty: 'EC' }] },
       authority_hints: authorityHints,
       ...givenClaims,
@@ -107,8 +111,8 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
           keys: [{ kid: 'a', kty: 'EC' }],
         },
         iss: entityId,
-        exp: dateInSeconds(1000 * 60 * 60 * 24 * 30), // 30 days
-        iat: dateInSeconds(),
+        exp: numericDate(1000 * 60 * 60 * 24 * 30), // 30 days
+        iat: numericDate(),
         ...givenClaims,
       }
 
@@ -151,3 +155,18 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
     nockScopes: (mockEndpoints ? nockScopes : undefined) as MockEndpoints extends true ? typeof nockScopes : never,
   } as const
 }
+
+/**
+ *
+ * The subordinate statements of a chain set up with {@link setupConfigurationChain}, leaf side first, as the
+ * resolver passes them to the metadata policy functions.
+ *
+ */
+export const subordinateStatements = (
+  chainData: Array<{ subordinateStatements?: Array<{ claims: EntityStatementClaimsOptions }> }>
+) =>
+  chainData
+    .slice(1)
+    .flatMap(({ subordinateStatements = [] }) =>
+      subordinateStatements.map(({ claims }) => entityStatementClaimsSchema.parse(claims))
+    )

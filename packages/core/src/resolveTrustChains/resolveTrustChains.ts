@@ -25,11 +25,7 @@ export type TrustAnchor = {
 export type ResolveTrustChainsOptions = {
   verifyJwtCallback: VerifyCallback
   entityId: string
-  /**
-   * @deprecated use `trustAnchors`
-   */
-  trustAnchorEntityIds?: Array<string>
-  trustAnchors?: Array<TrustAnchor>
+  trustAnchors: Array<TrustAnchor>
   /**
    * Used for every request. Pass one that applies your outbound request policy (allowed hosts, timeouts,
    * response size), as entity configurations name the URLs that are fetched.
@@ -154,10 +150,7 @@ export const resolveTrustChainsWithFailures = async (
   } = options
   const now = options.currentDate ?? new Date()
 
-  const trustAnchors: Array<TrustAnchor> = [
-    ...(options.trustAnchors ?? []),
-    ...(options.trustAnchorEntityIds ?? []).map((id) => ({ entityId: id })),
-  ]
+  const { trustAnchors } = options
   if (trustAnchors.length === 0) {
     throw fail('Cannot resolve a trust chain for zero trust anchors')
   }

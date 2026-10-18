@@ -2,10 +2,11 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import nock from 'nock'
 import { createEntityConfiguration, fetchEntityConfiguration } from '../src/entityConfiguration'
+import { entityStatementClaimsSchema } from '../src/entityStatement'
 import { createEntityStatement } from '../src/entityStatement/createEntityStatement'
 import { fetchEntityStatement } from '../src/entityStatement/fetchEntityStatement'
 import type { SignCallback, VerifyCallback } from '../src/utils'
-import { dateInSeconds } from './utils/dateInSeconds'
+import { numericDate } from './utils/numericDate'
 
 describe('fetch entity statement', () => {
   const signJwtCallback: SignCallback = () => Promise.resolve(new Uint8Array(10).fill(42))
@@ -38,8 +39,8 @@ describe('fetch entity statement', () => {
     })
 
     const entityStatementClaims = {
-      exp: dateInSeconds(),
-      iat: dateInSeconds(),
+      exp: numericDate(),
+      iat: numericDate(),
       iss,
       sub,
       jwks: { keys: [{ kty: 'EC', kid: 'b' }] },
@@ -78,7 +79,7 @@ describe('fetch entity statement', () => {
       issEntityConfiguration: fetchedEntityConfiguration,
     })
 
-    assert.deepStrictEqual(fetchedEntityStatement, entityStatementClaims)
+    assert.deepStrictEqual(fetchedEntityStatement, entityStatementClaimsSchema.parse(entityStatementClaims))
 
     scope.done()
   })
@@ -110,8 +111,8 @@ describe('fetch entity statement', () => {
     })
 
     const entityStatementClaims = {
-      exp: dateInSeconds(),
-      iat: dateInSeconds(),
+      exp: numericDate(),
+      iat: numericDate(),
       iss,
       sub,
       jwks: { keys: [{ kty: 'EC', kid: 'b' }] },
@@ -144,7 +145,7 @@ describe('fetch entity statement', () => {
       sub,
     })
 
-    assert.deepStrictEqual(fetchedEntityStatement, entityStatementClaims)
+    assert.deepStrictEqual(fetchedEntityStatement, entityStatementClaimsSchema.parse(entityStatementClaims))
 
     scope.done()
   })
@@ -176,8 +177,8 @@ describe('fetch entity statement', () => {
     })
 
     const entityStatementClaims = {
-      exp: dateInSeconds(),
-      iat: dateInSeconds(),
+      exp: numericDate(),
+      iat: numericDate(),
       iss,
       sub,
       jwks: { keys: [{ kty: 'EC', kid: 'b' }] },
@@ -211,7 +212,7 @@ describe('fetch entity statement', () => {
       endpoint: `${iss}/fetch`,
     })
 
-    assert.deepStrictEqual(fetchedEntityStatement, entityStatementClaims)
+    assert.deepStrictEqual(fetchedEntityStatement, entityStatementClaimsSchema.parse(entityStatementClaims))
 
     scope.done()
   })
@@ -327,8 +328,8 @@ describe('fetch entity statement', () => {
     })
 
     const entityStatementClaims = {
-      exp: dateInSeconds(),
-      iat: dateInSeconds(),
+      exp: numericDate(),
+      iat: numericDate(),
       iss,
       sub,
       jwks: { keys: [{ kty: 'EC', kid: 'b' }] },

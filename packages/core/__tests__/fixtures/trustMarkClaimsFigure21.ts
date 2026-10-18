@@ -1,5 +1,5 @@
 export const trustMarkClaimsFigure21 = {
-  id: 'https://mushrooms.federation.example.com/arrosto/agreements',
+  trust_mark_type: 'https://mushrooms.federation.example.com/arrosto/agreements',
   iss: 'https://agaricaceae.example.it',
   sub: 'https://coppolino.example.com',
   iat: 1579621160,

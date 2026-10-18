@@ -8,7 +8,8 @@ import type { SignCallback, VerifyCallback } from '../src/utils'
 
 import assert from 'node:assert/strict'
 import nock from 'nock'
-import { dateInSeconds } from './utils/dateInSeconds'
+import { entityConfigurationClaimsSchema } from '../src/entityConfiguration'
+import { numericDate } from './utils/numericDate'
 
 describe('fetch entity configuration', () => {
   const verifyJwtCallback: VerifyCallback = () => Promise.resolve(true)
@@ -21,8 +22,8 @@ describe('fetch entity configuration', () => {
     const claims = {
       iss: entityId,
       sub: entityId,
-      iat: dateInSeconds(),
-      exp: dateInSeconds(),
+      iat: numericDate(),
+      exp: numericDate(),
       jwks: { keys: [{ kid: 'a', kty: 'EC' }] },
     }
 
@@ -41,7 +42,7 @@ describe('fetch entity configuration', () => {
       verifyJwtCallback,
     })
 
-    assert.deepStrictEqual(fetchedEntityConfiguration, claims)
+    assert.deepStrictEqual(fetchedEntityConfiguration, entityConfigurationClaimsSchema.parse(claims))
 
     scope.done()
   })
@@ -52,8 +53,8 @@ describe('fetch entity configuration', () => {
     const claims = {
       iss: entityId,
       sub: entityId,
-      iat: dateInSeconds(),
-      exp: dateInSeconds(),
+      iat: numericDate(),
+      exp: numericDate(),
       metadata: {
         openid_relying_party: {
           client_name: 'bakfiets',
@@ -78,7 +79,7 @@ describe('fetch entity configuration', () => {
       verifyJwtCallback,
     })
 
-    assert.deepStrictEqual(fetchedEntityConfiguration, claims)
+    assert.deepStrictEqual(fetchedEntityConfiguration, entityConfigurationClaimsSchema.parse(claims))
 
     scope.done()
   })
@@ -89,8 +90,8 @@ describe('fetch entity configuration', () => {
     const claims = {
       iss: entityId,
       sub: entityId,
-      iat: dateInSeconds(),
-      exp: dateInSeconds(),
+      iat: numericDate(),
+      exp: numericDate(),
       jwks: { keys: [{ kid: 'a', kty: 'EC' }] },
     }
 
