@@ -5,8 +5,11 @@ import { describe, it } from 'node:test'
 import nock from 'nock'
 
 import { createEntityConfiguration, fetchEntityConfiguration } from '../src/entityConfiguration'
+import { entityConfigurationClaimsSchema } from '../src/entityConfiguration'
 import { createEntityStatement, fetchEntityStatement } from '../src/entityStatement'
+import { entityStatementClaimsSchema } from '../src/entityStatement'
 import type { SignCallback, VerifyCallback } from '../src/utils'
+import { numericDate } from './utils/numericDate'
 
 describe('End To End', async () => {
   const key = await subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify'])
@@ -35,8 +38,8 @@ describe('End To End', async () => {
     const claims = {
       iss,
       sub: iss,
-      exp: new Date(),
-      iat: new Date(),
+      exp: numericDate(),
+      iat: numericDate(),
       jwks: {
         keys: [publicKeyJwk],
       },
@@ -60,7 +63,7 @@ describe('End To End', async () => {
       verifyJwtCallback,
     })
 
-    assert.deepStrictEqual(fetchedEntityConfigurationClaims, claims)
+    assert.deepStrictEqual(fetchedEntityConfigurationClaims, entityConfigurationClaimsSchema.parse(claims))
 
     scope.done()
   })
@@ -74,8 +77,8 @@ describe('End To End', async () => {
       claims: {
         iss,
         sub: iss,
-        exp: new Date(),
-        iat: new Date(),
+        exp: numericDate(),
+        iat: numericDate(),
         jwks: {
           keys: [publicKeyJwk],
         },
@@ -94,8 +97,8 @@ describe('End To End', async () => {
     const entityStamentClaims = {
       iss,
       sub: iss,
-      exp: new Date(),
-      iat: new Date(),
+      exp: numericDate(),
+      iat: numericDate(),
       jwks: {
         keys: [],
       },
@@ -140,7 +143,7 @@ describe('End To End', async () => {
       verifyJwtCallback,
     })
 
-    assert.deepStrictEqual(fetchedEntityStatementClaims, entityStamentClaims)
+    assert.deepStrictEqual(fetchedEntityStatementClaims, entityStatementClaimsSchema.parse(entityStamentClaims))
 
     scope.done()
   })

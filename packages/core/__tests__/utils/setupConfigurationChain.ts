@@ -7,6 +7,7 @@ import {
 import { type EntityStatementClaimsOptions, createEntityStatement } from '../../src/entityStatement'
 import type { JsonWebKeySetOptions } from '../../src/jsonWeb'
 import type { SignCallback } from '../../src/utils'
+import { numericDate } from './numericDate'
 
 type SubordinateOptions = {
   entityId: string
@@ -60,8 +61,8 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
     const claims: EntityConfigurationClaimsOptions = {
       iss: entityId,
       sub: entityId,
-      exp: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
-      iat: new Date(),
+      exp: numericDate(1000 * 60 * 60 * 24 * 30), // 30 days
+      iat: numericDate(),
       jwks: jwks ?? { keys: [{ kid: 'a', kty: 'EC' }] },
       authority_hints: authorityHints,
       ...givenClaims,
@@ -103,8 +104,8 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
       const subordinateClaims = {
         jwks: { keys: [] },
         iss: entityId,
-        exp: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
-        iat: new Date(),
+        exp: numericDate(1000 * 60 * 60 * 24 * 30), // 30 days
+        iat: numericDate(),
         ...givenClaims,
       }
 

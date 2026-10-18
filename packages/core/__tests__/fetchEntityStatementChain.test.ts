@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { fetchEntityConfigurationChains } from '../src/entityConfiguration'
+import { entityConfigurationClaimsSchema } from '../src/entityConfiguration'
 import { fetchEntityStatementChain } from '../src/entityStatement'
 import type { SignCallback, VerifyCallback } from '../src/utils'
 import { setupConfigurationChain } from './utils/setupConfigurationChain'
@@ -30,8 +31,8 @@ describe('fetch entity statement chain', () => {
     assert.strictEqual(chains.length, 1)
     assert.strictEqual(chains[0]?.length, 2)
 
-    assert.deepStrictEqual(chains[0]?.[0], configurations[0]?.claims)
-    assert.deepStrictEqual(chains[0]?.[1], configurations[1]?.claims)
+    assert.deepStrictEqual(chains[0]?.[0], entityConfigurationClaimsSchema.parse(configurations[0]?.claims))
+    assert.deepStrictEqual(chains[0]?.[1], entityConfigurationClaimsSchema.parse(configurations[1]?.claims))
 
     const statements = await fetchEntityStatementChain({
       verifyJwtCallback,
@@ -78,9 +79,9 @@ describe('fetch entity statement chain', () => {
     assert.strictEqual(chains.length, 1)
     assert.strictEqual(chains[0]?.length, 3)
 
-    assert.deepStrictEqual(chains[0]?.[0], configurations[0]?.claims)
-    assert.deepStrictEqual(chains[0]?.[1], configurations[1]?.claims)
-    assert.deepStrictEqual(chains[0]?.[2], configurations[2]?.claims)
+    assert.deepStrictEqual(chains[0]?.[0], entityConfigurationClaimsSchema.parse(configurations[0]?.claims))
+    assert.deepStrictEqual(chains[0]?.[1], entityConfigurationClaimsSchema.parse(configurations[1]?.claims))
+    assert.deepStrictEqual(chains[0]?.[2], entityConfigurationClaimsSchema.parse(configurations[2]?.claims))
 
     const statements = await fetchEntityStatementChain({
       verifyJwtCallback,
