@@ -18,13 +18,8 @@ export enum MetadataMergeStrategy {
    */
   Intersection = 2,
   /**
-   * @deprecated use {@link MetadataMergeStrategy.LogicalOr}, which `essential` uses in OpenID Federation 1.0.
-   */
-  SuperiorFollowsIfTrue = 3,
-  /**
    *
    * The result of merging the values of two these operators is the logical disjunction (OR) of the operator values.
-   * Declared after the deprecated alias, so that the reverse mapping of 3 is 'LogicalOr'.
    *
    */
   LogicalOr = 3,

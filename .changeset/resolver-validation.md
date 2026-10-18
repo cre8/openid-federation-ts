@@ -1,5 +1,5 @@
 ---
-"@openid-federation/core": minor
+"@openid-federation/core": major
 ---
 
 Validate trust chains as described in Section 10 of OpenID Federation 1.0.
@@ -13,7 +13,7 @@ Validate trust chains as described in Section 10 of OpenID Federation 1.0.
 - rejects statements with `crit` claims that are not in `understoodCriticalClaims`;
 - applies the `max_path_length` and `allowed_entity_types` constraints (entity types are removed before the metadata policies are applied, and a policy can not add them back);
 - compares entity identifiers exactly (Section 16);
-- accepts `trustAnchors` with optional pinned `jwks` (out-of-band trust anchor keys); `trustAnchorEntityIds` is deprecated. Only with `jwks` is the trust anchor's entity configuration checked against keys of the trust anchor as Section 10.2 requires; without them it is trusted on its own signature, as before;
+- takes the trust anchors as `trustAnchors`, each with optional pinned `jwks` (out-of-band trust anchor keys); `trustAnchorEntityIds` is removed. Only with `jwks` is the trust anchor's entity configuration checked against keys of the trust anchor as Section 10.2 requires; without them it is trusted on its own signature, as before;
 - bounds the resolution with `maxDepth` (default 8), `maxRequests` (default 64, also the number of entity visits) and `maxAuthorityHints` (default 10, duplicates ignored), so repeated or converging `authority_hints` can not cause exponential work;
 - rejects chains with `naming_constraints`, which are not evaluated yet, and statements whose `iat` or `exp` is not a valid date;
 - returns `jwtChain` (the trust chain as compact JWTs, leaf first) and `expiresAt` (earliest `exp` of the chain) for each chain.
@@ -23,7 +23,7 @@ Validate trust chains as described in Section 10 of OpenID Federation 1.0.
 Other fixes:
 
 - `fetchEntityConfiguration` checks that `sub` is the requested entity, `fetchEntityStatement` that `iss` and `sub` are the requested ones.
-- `fetchEntityStatementChain` accepts `fetchCallback`.
+- `fetchEntityConfigurationChains` and `fetchEntityStatementChain` are removed: they checked subordinate statements against the keys an intermediate published itself, not as Section 10.2 requires. Use `resolveTrustChains`. `EntityStatementChain` is still exported.
 - Fetch endpoint requests send only `sub` (Section 8.1.1), not `iss`.
 - Requests reject non-2xx responses, compare the content-type without parameters such as `charset` (#17), and no longer append an empty `?` to URLs.
 - `OpenIdFederationError` and `PolicyErrorStage` are exported.

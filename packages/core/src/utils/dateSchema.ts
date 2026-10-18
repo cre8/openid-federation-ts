@@ -2,9 +2,10 @@ import { z } from 'zod'
 
 /**
  *
- * Date schema that parses an unix timestamp in seconds since EPOCH to js date object
+ * NumericDate (RFC 7519 Section 2): seconds since the epoch, parsed to a js date object
  *
  */
 export const dateSchema = z
-  .union([z.date(), z.number(), z.string().transform((x) => (x.includes('T') ? new Date(x) : Number(x)))])
-  .transform((d) => (d instanceof Date ? d : new Date(d * 1000)))
+  .number()
+  .finite()
+  .transform((seconds) => new Date(seconds * 1000))

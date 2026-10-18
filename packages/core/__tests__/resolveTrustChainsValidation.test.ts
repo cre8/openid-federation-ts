@@ -3,6 +3,7 @@ import { webcrypto } from 'node:crypto'
 import { afterEach, beforeEach, describe, it } from 'node:test'
 import { createEntityConfiguration } from '../src/entityConfiguration'
 import { createEntityStatement } from '../src/entityStatement'
+import { createJsonWebToken, createJwtSignableInput } from '../src/jsonWeb'
 import type { JsonWebKey } from '../src/jsonWeb'
 import {
   type ResolveTrustChainsOptions,
@@ -10,7 +11,7 @@ import {
   resolveTrustChainsWithFailures,
 } from '../src/resolveTrustChains'
 import type { FetchCallback, SignCallback, VerifyCallback } from '../src/utils'
-import { dateInSeconds } from './utils/dateInSeconds'
+import { numericDate } from './utils/numericDate'
 
 const { subtle } = webcrypto
 const ALGORITHM = { name: 'ECDSA', namedCurve: 'P-256' } as const
@@ -72,8 +73,8 @@ class Federation {
       claims: {
         iss: entity.id,
         sub: entity.id,
-        iat: dateInSeconds(),
-        exp: dateInSeconds(DAY),
+        iat: numericDate(),
+        exp: numericDate(DAY),
         jwks: { keys: entity.jwks ?? [entity.key] },
         authority_hints: entity.authorityHints,
         metadata: {
@@ -96,8 +97,8 @@ class Federation {
       claims: {
         iss: issuer.id,
         sub: subject.id,
-        iat: dateInSeconds(),
-        exp: dateInSeconds(DAY),
+        iat: numericDate(),
+        exp: numericDate(DAY),
         jwks: { keys: jwks ?? subject.jwks ?? [subject.key] },
         ...claims,
       },
@@ -211,8 +212,8 @@ describe('resolve trust chains with validation', () => {
       claims: {
         iss: trustAnchor.id,
         sub: trustAnchor.id,
-        iat: dateInSeconds(),
-        exp: dateInSeconds(DAY),
+        iat: numericDate(),
+        exp: numericDate(DAY),
         jwks: { keys: [attacker.key] },
         metadata: { federation_entity: { federation_fetch_endpoint: `${attacker.id}/fetch` } },
       },
@@ -302,7 +303,7 @@ describe('resolve trust chains with validation', () => {
   })
 
   it('should reject an expired leaf entity configuration', async () => {
-    await federation.addEntity({ ...leaf, claims: { exp: dateInSeconds(-1000) } })
+    await federation.addEntity({ ...leaf, claims: { exp: numericDate(-1000) } })
 
     const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
 
@@ -311,7 +312,7 @@ describe('resolve trust chains with validation', () => {
   })
 
   it('should reject an intermediate entity configuration issued in the future', async () => {
-    await federation.addEntity({ ...intermediate, claims: { iat: dateInSeconds(DAY / 2) } })
+    await federation.addEntity({ ...intermediate, claims: { iat: numericDate(DAY / 2) } })
 
     const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
 
@@ -320,7 +321,7 @@ describe('resolve trust chains with validation', () => {
   })
 
   it('should accept a clock difference within clockSkewSeconds', async () => {
-    await federation.addEntity({ ...intermediate, claims: { iat: dateInSeconds(30_000) } })
+    await federation.addEntity({ ...intermediate, claims: { iat: numericDate(30_000) } })
 
     const trustChains = await resolveTrustChains(federation.options({ entityId: leaf.id, clockSkewSeconds: 60 }))
 
@@ -454,7 +455,23 @@ describe('resolve trust chains with validation', () => {
   })
 
   it('should reject a statement whose exp is not a NumericDate', async () => {
-    await federation.addStatement({ issuer: intermediate, subject: leaf, claims: { exp: 'never' } })
+    // Signed by hand, as createEntityStatement only accepts NumericDate values
+    const header = { kid: intermediate.key.kid, typ: 'entity-statement+jwt', alg: 'ES256' }
+    const claims = {
+      iss: intermediate.id,
+      sub: leaf.id,
+      iat: numericDate(),
+      exp: 'never',
+      jwks: { keys: [leaf.key] },
+    }
+    const signature = await signJwtCallback({
+      toBeSigned: createJwtSignableInput(header, claims),
+      jwk: intermediate.key,
+    })
+    federation.serve(
+      `${intermediate.id}/fetch?${new URLSearchParams({ sub: leaf.id })}`,
+      createJsonWebToken(header, claims, signature)
+    )
 
     const { trustChains, failures } = await resolveTrustChainsWithFailures(federation.options({ entityId: leaf.id }))
 

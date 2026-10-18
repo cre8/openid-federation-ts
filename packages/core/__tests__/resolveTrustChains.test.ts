@@ -22,7 +22,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -54,7 +54,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -107,7 +107,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -150,7 +150,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorOneEntityId, trustAnchorTwoEntityId],
+      trustAnchors: [trustAnchorOneEntityId, trustAnchorTwoEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -194,7 +194,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorOneEntityId],
+      trustAnchors: [trustAnchorOneEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -210,7 +210,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: configurations[0]!.entityId,
-      trustAnchorEntityIds: ['https://trust.example.org'],
+      trustAnchors: ['https://trust.example.org'].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -245,7 +245,7 @@ describe('fetch trust chains', () => {
     const trustChains = await resolveTrustChains({
       verifyJwtCallback,
       entityId: configurations[0]!.entityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
     })
 
     assert.strictEqual(trustChains.length, 0)
@@ -260,7 +260,7 @@ describe('fetch trust chains', () => {
       resolveTrustChains({
         verifyJwtCallback,
         entityId: 'https://example.org',
-        trustAnchorEntityIds: [],
+        trustAnchors: [].map((entityId) => ({ entityId })),
       })
     )
   })
@@ -363,7 +363,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -490,7 +490,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [leafEntityId],
+      trustAnchors: [leafEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -570,7 +570,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -632,7 +632,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -700,7 +700,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -782,7 +782,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -846,7 +846,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -907,7 +907,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
@@ -975,7 +975,7 @@ describe('fetch trust chains', () => {
 
     const trustChains = await resolveTrustChains({
       entityId: leafEntityId,
-      trustAnchorEntityIds: [trustAnchorEntityId],
+      trustAnchors: [trustAnchorEntityId].map((entityId) => ({ entityId })),
       verifyJwtCallback,
     })
 
