@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { entityConfigurationClaimsSchema, fetchEntityConfiguration } from '../src/entityConfiguration'
-import { fetchEntityStatementChain } from '../src/entityStatement'
+import { fetchEntityConfiguration } from '../src/entityConfiguration'
 import { applyMetadataPolicyToMetadata, combineMetadataPolicies } from '../src/resolveTrustChains/policies'
 import { mergeMetadata } from '../src/resolveTrustChains/policies/utils'
 import type { SignCallback, VerifyCallback } from '../src/utils'
-import { setupConfigurationChain } from './utils/setupConfigurationChain'
+import { setupConfigurationChain, subordinateStatements } from './utils/setupConfigurationChain'
 
 describe('policy application to the real metadata chain', () => {
   const signJwtCallback: SignCallback = () => Promise.resolve(new Uint8Array(10).fill(42))
@@ -107,12 +106,8 @@ describe('policy application to the real metadata chain', () => {
       { signJwtCallback, mockEndpoints: true }
     )
 
-    const statements = await fetchEntityStatementChain({
-      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
-      verifyJwtCallback,
-    })
-
-    const statementsWithoutLeaf = statements.slice(0, -1)
+    // The subordinate statements, leaf side first, without the trust anchor's entity configuration
+    const statementsWithoutLeaf = subordinateStatements(configurations)
 
     const { mergedPolicy } = await combineMetadataPolicies({ statements: statementsWithoutLeaf })
 

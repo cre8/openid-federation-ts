@@ -1,14 +1,12 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { entityConfigurationClaimsSchema } from '../src/entityConfiguration'
-import { fetchEntityStatementChain } from '../src/entityStatement'
 import { combineMetadataPolicies } from '../src/resolveTrustChains/policies/combineMetadataPolicies'
 import type { SignCallback, VerifyCallback } from '../src/utils'
-import { setupConfigurationChain } from './utils/setupConfigurationChain'
+import { setupConfigurationChain, subordinateStatements } from './utils/setupConfigurationChain'
 
 describe('policy merge', () => {
   const signJwtCallback: SignCallback = () => Promise.resolve(new Uint8Array(10).fill(42))
-  const verifyJwtCallback: VerifyCallback = () => Promise.resolve(true)
+  const _verifyJwtCallback: VerifyCallback = () => Promise.resolve(true)
 
   // add
 
@@ -59,10 +57,7 @@ describe('policy merge', () => {
       { signJwtCallback, mockEndpoints: true }
     )
 
-    const statements = await fetchEntityStatementChain({
-      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
-      verifyJwtCallback,
-    })
+    const statements = subordinateStatements(configurations)
 
     const { mergedPolicy } = await combineMetadataPolicies({ statements })
 
@@ -122,10 +117,7 @@ describe('policy merge', () => {
       { signJwtCallback, mockEndpoints: true }
     )
 
-    const statements = await fetchEntityStatementChain({
-      verifyJwtCallback,
-      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
-    })
+    const statements = subordinateStatements(configurations)
 
     assert.throws(() => combineMetadataPolicies({ statements }))
   })
@@ -177,10 +169,7 @@ describe('policy merge', () => {
       { signJwtCallback, mockEndpoints: true }
     )
 
-    const statements = await fetchEntityStatementChain({
-      verifyJwtCallback,
-      entityConfigurations: configurations.map(({ claims }) => entityConfigurationClaimsSchema.parse(claims)),
-    })
+    const statements = subordinateStatements(configurations)
 
     const { mergedPolicy } = await combineMetadataPolicies({ statements })
 

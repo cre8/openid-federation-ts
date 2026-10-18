@@ -4,7 +4,11 @@ import {
   type EntityConfigurationHeaderOptions,
   createEntityConfiguration,
 } from '../../src/entityConfiguration'
-import { type EntityStatementClaimsOptions, createEntityStatement } from '../../src/entityStatement'
+import {
+  type EntityStatementClaimsOptions,
+  createEntityStatement,
+  entityStatementClaimsSchema,
+} from '../../src/entityStatement'
 import type { JsonWebKeySetOptions } from '../../src/jsonWeb'
 import type { SignCallback } from '../../src/utils'
 import { numericDate } from './numericDate'
@@ -101,8 +105,11 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
     for (const sub of subordinates ?? []) {
       const givenClaims = typeof sub === 'string' ? { sub } : { sub: sub.entityId, ...sub.claims }
 
+      // A subordinate statement lists the subject's federation keys
       const subordinateClaims = {
-        jwks: { keys: [] },
+        jwks: chainOptions.find((options) => options.entityId === givenClaims.sub)?.jwks ?? {
+          keys: [{ kid: 'a', kty: 'EC' }],
+        },
         iss: entityId,
         exp: numericDate(1000 * 60 * 60 * 24 * 30), // 30 days
         iat: numericDate(),
@@ -120,7 +127,6 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
           .get('')
           .query({
             sub: subordinateClaims.sub,
-            iss: entityId,
           })
           .reply(200, entityStatementJwt, {
             'content-type': 'application/entity-statement+jwt',
@@ -149,3 +155,18 @@ export const setupConfigurationChain = async <MockEndpoints extends boolean>(
     nockScopes: (mockEndpoints ? nockScopes : undefined) as MockEndpoints extends true ? typeof nockScopes : never,
   } as const
 }
+
+/**
+ *
+ * The subordinate statements of a chain set up with {@link setupConfigurationChain}, leaf side first, as the
+ * resolver passes them to the metadata policy functions.
+ *
+ */
+export const subordinateStatements = (
+  chainData: Array<{ subordinateStatements?: Array<{ claims: EntityStatementClaimsOptions }> }>
+) =>
+  chainData
+    .slice(1)
+    .flatMap(({ subordinateStatements = [] }) =>
+      subordinateStatements.map(({ claims }) => entityStatementClaimsSchema.parse(claims))
+    )

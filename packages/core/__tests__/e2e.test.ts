@@ -96,7 +96,7 @@ describe('End To End', async () => {
 
     const entityStamentClaims = {
       iss,
-      sub: iss,
+      sub,
       exp: numericDate(),
       iat: numericDate(),
       jwks: {
@@ -126,7 +126,7 @@ describe('End To End', async () => {
         'content-type': 'application/entity-statement+jwt',
       })
       .get('/fetch')
-      .query({ iss, sub })
+      .query({ sub })
       .reply(200, entityStatementJwt, {
         'content-type': 'application/entity-statement+jwt',
       })
